@@ -7,6 +7,7 @@ requires-python = ">=3.7"
 authors = [
     { name = "A.A. Zateev", email = "z1195522@gmail.com" },
 ]
+dependencies = ["redis"]
 
 [build-system]
 requires = [
@@ -27,6 +28,7 @@ where = ["src"]
 [project.optional-dependencies]
 formatters = ["black", "isort", "autoflake"]
 linters = ["flake8>5", "flake8-pyproject", "flake8-import-order"]
+testing = ["pytest", "pytest-docker[docker-compose-v1]", "requests"]
 
 # formatters
 [tool.black]
@@ -80,3 +82,4 @@ ignore_init_module_imports = true
 extend_exclude = ['venv*/','build/']
 max_line_length = 79
 import_order_style = 'smarkets'
+application_import_names = ['otus_scoring_api']

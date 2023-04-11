@@ -4,7 +4,7 @@ install:
 
 install-dev:
 	python -m pip install -U pip setuptools
-	python -m pip install -e .[linters,formatters]
+	python -m pip install -e .[linters,formatters,testing]
 
 format:
 	autoflake src/
@@ -14,5 +14,10 @@ format:
 check:
 	flake8 .
 
-test:
-	python -m unittest tests.py
+test-unit:
+	pytest tests/unit
+
+test-integration:
+	pytest --rootdir=tests/integration tests/integration
+
+test: test-unit test-integration

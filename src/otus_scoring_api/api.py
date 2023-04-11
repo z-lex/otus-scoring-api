@@ -12,6 +12,7 @@ from otus_scoring_api.constants import (
     OK,
 )
 from otus_scoring_api.handlers import method_handler
+from otus_scoring_api.store import DEFAULT_REDIS_URL, RedisStore
 
 
 class MainHTTPHandler(BaseHTTPRequestHandler):
@@ -71,6 +72,9 @@ def main():
     op = OptionParser()
     op.add_option("-p", "--port", action="store", type=int, default=8080)
     op.add_option("-l", "--log", action="store", default=None)
+    op.add_option(
+        "-r", "--redis-url", action="store", default=DEFAULT_REDIS_URL
+    )
     (opts, args) = op.parse_args()
     logging.basicConfig(
         filename=opts.log,
@@ -78,7 +82,8 @@ def main():
         format="[%(asctime)s] %(levelname).1s %(message)s",
         datefmt="%Y.%m.%d %H:%M:%S",
     )
-    server = HTTPServer(("localhost", opts.port), MainHTTPHandler)
+    MainHTTPHandler.store = RedisStore(url=opts.redis_url)
+    server = HTTPServer(("0.0.0.0", opts.port), MainHTTPHandler)
     logging.info("Starting server at %s" % opts.port)
     try:
         server.serve_forever()

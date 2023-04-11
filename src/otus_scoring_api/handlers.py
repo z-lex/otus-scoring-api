@@ -4,6 +4,7 @@ import typing as t
 
 from otus_scoring_api.classes import (
     ClientsInterestsRequest,
+    DateField,
     MethodRequest,
     OnlineScoreRequest,
     ValidationError,
@@ -11,11 +12,12 @@ from otus_scoring_api.classes import (
 from otus_scoring_api.constants import (
     ADMIN_SALT,
     FORBIDDEN,
+    INTERNAL_ERROR,
     INVALID_REQUEST,
     OK,
     SALT,
 )
-from otus_scoring_api.scoring import get_interests, get_score
+from otus_scoring_api.scoring import get_interests, get_score, ScoringError
 
 SUPPORTED_METHODS = {
     "online_score": OnlineScoreRequest,
@@ -76,7 +78,16 @@ def method_handler(
         if parsed_request.is_admin:
             score = 42
         else:
-            score = get_score(store=store, **method_args.as_dict())
+            method_args = t.cast(OnlineScoreRequest, method_args)
+            score = get_score(
+                store=store,
+                phone=method_args.phone,
+                email=method_args.email,
+                birthday=DateField.as_datetime(method_args.birthday),
+                gender=method_args.gender,
+                first_name=method_args.first_name,
+                last_name=method_args.last_name,
+            )
         response = {"score": score}
 
     elif parsed_request.method == "clients_interests":
@@ -86,10 +97,14 @@ def method_handler(
             code = INVALID_REQUEST
             response = "clients_ids list cannot be empty"
         else:
-            response = {
-                str(cid): get_interests(store, cid)
-                for cid in method_args.client_ids
-            }
+            try:
+                response = {
+                    str(cid): get_interests(store, str(cid))
+                    for cid in method_args.client_ids
+                }
+            except ScoringError as e:
+                code = INTERNAL_ERROR
+                response = str(e)
     else:
         code = INVALID_REQUEST
         response = f"Method '{parsed_request.method}' unsupported"

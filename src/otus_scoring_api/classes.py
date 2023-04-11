@@ -83,7 +83,7 @@ class DateField(CharField):
         if v is None:
             return v
         try:
-            datetime.strptime(value, self._FORMAT)
+            self.as_datetime(value)
         except ValueError:
             raise ValidationError(
                 f"string '{value}' does not match with "
@@ -91,6 +91,12 @@ class DateField(CharField):
             )
         else:
             return value
+
+    @classmethod
+    def as_datetime(cls, value: t.Optional[str]) -> t.Optional[datetime]:
+        if value is None:
+            return None
+        return datetime.strptime(value, cls._FORMAT)
 
 
 class BirthDayField(DateField):
@@ -100,14 +106,13 @@ class BirthDayField(DateField):
             return v
 
         today = datetime.today()
-        if datetime.strptime(value, self._FORMAT) < today.replace(
-            year=today.year - 70
-        ):
+        dt = self.as_datetime(value)
+        if dt < today.replace(year=today.year - 70):
             raise ValidationError(
                 f"date of birth cannot be earlier than 70 years before now: "
                 f"'{value}'"
             )
-        elif datetime.strptime(value, self._FORMAT) > today:
+        elif dt > today:
             raise ValidationError(
                 f"date of birth cannot be in future: '{value}'"
             )
